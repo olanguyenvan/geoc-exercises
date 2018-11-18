@@ -19,7 +19,6 @@ function getTriangleInCounterClockWiseOrder(triangle){
 
 
 function isInsideTriangle(triangle, point){
-    console.log("computing inside triangle ", triangle, point);
     let triangleInCounterClockWiseOrder = getTriangleInCounterClockWiseOrder(triangle);
     let vertex1 = triangleInCounterClockWiseOrder[0];
     let vertex2 = triangleInCounterClockWiseOrder[1];
@@ -28,7 +27,7 @@ function isInsideTriangle(triangle, point){
     let ot2 = orientationTest(vertex2, vertex3, point);
     let ot3 = orientationTest(vertex3, vertex1, point);
     if (ot1 > 0 && ot2 > 0 && ot3 > 0) {
-        console.log("Point is inside triangle ", triangle);
+        // console.log("Point is inside triangle ", triangle);
         return true
     }
     return false
