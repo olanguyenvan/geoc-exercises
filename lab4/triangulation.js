@@ -8,14 +8,12 @@
 
 class DCELStructure{
     constructor(points){
-        this.points = points;
+        // auxiliary point will be always 4th point
         let numberOfPoints = points.length;
         this.facesList = [numberOfPoints - 2];
-        this.verticesList = new Array(numberOfPoints);
         this.edgesList = new Array(3 * numberOfPoints - 6);
         this.facesCount = 0;
         this.edgesCount = 0;
-
 
         this.edgesList[0] = {
             'vertexStart': 0,
@@ -47,9 +45,22 @@ class DCELStructure{
         this.facesList[0] = 0;
         this.facesCount += 1;
 
-        this.verticesList[0] = {point: this.points[0], edgeIndex:0};
-        this.verticesList[1] = {point: this.points[1], edgeIndex:1};
-        this.verticesList[2] = {point: this.points[2], edgeIndex:2};
+        this.verticesList = new Array(numberOfPoints);
+        for(let i = 0; i < points.length; i++){
+            this.verticesList[i] = {pointCoordinates: points[i]}
+        }
+        this.verticesList[0].edgeIndex = 0;
+        this.verticesList[1].edgeIndex = 1;
+        this.verticesList[2].edgeIndex = 2;
+
+
+        this.fixedPoint = 3;
+        this.addPointToFace(3, 0);
+
+    }
+
+    getEdgeFromVertex(vertexIndex){
+        return this.verticesList[vertexIndex].edgeIndex;
     }
 
     getStartingVertexFromEdge(edgeIndex){
@@ -75,7 +86,6 @@ class DCELStructure{
     getNextEdge(edgeIndex){
         return this.edgesList[edgeIndex].edgeNext;
     }
-    
 
 
     getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(edgeIndex, faceIndex){
@@ -86,7 +96,7 @@ class DCELStructure{
             return this.getEndingVertexFromEdge(edgeIndex);
         }
         else {
-            console.warn("an edge ", edgeIndex,  " didnt have face with index ", faceIndex)
+            console.warn("an edge ", edgeIndex,  " didnt have face with index ", faceIndex);
             this.printEdges();
         }
 
@@ -113,14 +123,101 @@ class DCELStructure{
         }
     }
 
+    getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesIndices){
+        for(let edgeIndex in edgesIndices){
+            if (this.getStartingVertexFromEdge(edgeIndex) !== this.fixedPoint && this.getEndingVertexFromEdge(edgeIndex)){
+                return edgeIndex
+            }
+        }
+    }
 
-    addPointToTriangulatedSet(faceIndex, newPointIndex){
+    getVertexCoordinates(vertexIndex){
+        return this.verticesList[vertexIndex].pointCoordinates
+    }
+
+    addPointToTriangulatedSet(newPointIndex, faceIndex){
+        //find a face
+        // let stabbingLine =
+
+        let newPointCoordinates = this.getVertexCoordinates(newPointIndex);
+        let fixedPointCoordinates = this.getVertexCoordinates(this.fixedPoint);
+        let facesAroundFixedVertex = this.getFacesAroundVertex(this.fixedPoint);
+        let pointFound = false;
+
+
+
+        for(let faceAroundFixedVertex in facesAroundFixedVertex){
+            // check if point is already in this face
+            let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceAroundFixedVertex);
+            let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
+            let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+
+            if (pointInTriangle){
+                console.log("point in Triangle <3 ", verticesIndicesAroundFace, newPointCoordinates);
+                pointFound = true;
+                this.addPointToFace(newPointIndex, faceAroundFixedVertex);
+                break;
+            }
+        }
+
+        if (!pointFound){
+            for(let faceAroundFixedVertex in facesAroundFixedVertex){
+                // check whether stabbing line goes through interior of this face, if yes, find recursively
+                let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
+                let edgeNotPointingToFixedVertex = this.getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesAroundFace);
+                let startVertexCoordinates = this.getStartingVertexFromEdge(edgeNotPointingToFixedVertex).pointCoordinates;
+                let endVertexCoordinates = this.getEndingVertexFromEdge(edgeNotPointingToFixedVertex).pointCoordinates;
+                let a = orientationTest(startVertexCoordinates, endVertexCoordinates, fixedPointCoordinates);
+                let b = orientationTest(startVertexCoordinates, endVertexCoordinates, newPointCoordinates);
+                let c = orientationTest(fixedPointCoordinates, newPointCoordinates, startVertexCoordinates);
+                let d = orientationTest(fixedPointCoordinates, newPointCoordinates, endVertexCoordinates);
+
+                if (a * b < 0 && c * d < 0){
+
+                    let nextFaceToSearch = this.getOtherFaceFromEdge(edgeNotPointingToFixedVertex, faceAroundFixedVertex);
+                    let foundFace =  this.recursivelySearchByStabbingLine(edgeNotPointingToFixedVertex, nextFaceToSearch, newPointCoordinates)
+                    this.addPointToFace(newPointIndex, foundFace);
+                    break;
+                }
+            }
+        }
+    }
+
+    recursivelySearchByStabbingLine(edgeEnteredBy, faceIndex, newPointCoordinates){
+        // for now: one level only
+        console.log("recursively search by stabbing line");
+        let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceIndex);
+        let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
+        let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+
+        if (pointInTriangle){
+            return faceIndex
+        }
+        // let edgeNotPointingToFixedVertex = this.getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesAroundFace);
+        // let startVertexCoordinates = this.getStartingVertexFromEdge(edgeNotPointingToFixedVertex).pointCoordinates;
+        // let endVertexCoordinates = this.getEndingVertexFromEdge(edgeNotPointingToFixedVertex).pointCoordinates;
+        // let a = orientationTest(startVertexCoordinates, endVertexCoordinates, fixedPointCoordinates);
+        // let b = orientationTest(startVertexCoordinates, endVertexCoordinates, newPointCoordinates);
+        // let c = orientationTest(fixedPointCoordinates, newPointCoordinates, startVertexCoordinates);
+        // let d = orientationTest(fixedPointCoordinates, newPointCoordinates, endVertexCoordinates);
+    }
+
+    getOtherFaceFromEdge(edgeIndex, firstFace){
+        let rightFace = this.getRightFace(edgeIndex);
+        if (rightFace === firstFace){
+            return this.getLeftFace(edgeIndex);
+        }
+        return rightFace;
+    }
+
+
+    addPointToFace(newPointIndex, faceIndex){
+        faceIndex = parseInt(faceIndex); //WTF
         let edgesCountBeforeAdding = this.edgesCount;
         let facesCountBeforeAdding = this.facesCount;
 
-        this.verticesList[newPointIndex] = {'edgeIndex': edgesCountBeforeAdding, point: this.points[newPointIndex]}; //create new vertex
+        this.verticesList[newPointIndex].edgeIndex = edgesCountBeforeAdding; //add information about edge
         let edgesEnclosingFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex);
-
         this.facesList[faceIndex] = edgesCountBeforeAdding;
         this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding + 1; //create two new faces
         this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 2;
@@ -153,8 +250,6 @@ class DCELStructure{
         this.replaceFaceIndexWithNewOne(edgesEnclosingFace[1], faceIndex, facesCountBeforeAdding + 1);
         this.replaceEdgeWithNewOne(edgesEnclosingFace[1], edgesEnclosingFace[0], edgesCountBeforeAdding + 1);
 
-
-
         this.edgesList[edgesCountBeforeAdding + 2] = {
             'vertexStart': newPointIndex,
             'vertexEnd': this.getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(
@@ -169,8 +264,9 @@ class DCELStructure{
 
         this.edgesCount += 3;
         this.facesCount += 2;
-    }
 
+        console.log("ending adding point ", newPointIndex)
+    }
 
     getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex) {
         let firstEdgeAttachedToFace = this.facesList[faceIndex];
@@ -187,8 +283,8 @@ class DCELStructure{
         }
 
         else { //sees the faces on its right, then find next
-            secondEdgeAttachedToFace= this.getNextEdge(firstEdgeAttachedToFace);
-            if (this.getEndingVertexFromEdge(secondEdgeAttachedToFace) === this.getStartingVertexFromEdge(secondEdgeAttachedToFace)){
+            secondEdgeAttachedToFace = this.getNextEdge(firstEdgeAttachedToFace);
+            if (this.getStartingVertexFromEdge(secondEdgeAttachedToFace) === this.getEndingVertexFromEdge(firstEdgeAttachedToFace)){
                 thirdEdgeAttachedToFace = this.getNextEdge(secondEdgeAttachedToFace)
             }
             else{
@@ -212,7 +308,8 @@ class DCELStructure{
     printVertices(){
         for(let i = 0; i < this.verticesList.length; i++){
             if (this.verticesList[i] !== undefined) {
-                console.log("vertex ", i, " coord: ", this.verticesList[i].point.x, this.verticesList[i].point.y)
+                console.log("vertex ", i, " coord: ", this.verticesList[i].pointCoordinates.x,
+                    this.verticesList[i].pointCoordinates.y, " edge: ", this.verticesList[i].edgeIndex)
             }
         }
     }
@@ -226,7 +323,7 @@ class DCELStructure{
     }
 
 
-    getVerticesAroundFace(faceIndex) {
+    getVerticesIndicesAroundFace(faceIndex) {
         let vertices = [];
         let firstEdgeAttachedToFace = this.facesList[faceIndex];
         vertices.push(this.getStartingVertexFromEdge(firstEdgeAttachedToFace), this.getEndingVertexFromEdge(firstEdgeAttachedToFace));
@@ -243,12 +340,35 @@ class DCELStructure{
         return Array.from(new Set(vertices))
     }
 
+    getFacesAroundVertex(vertexIndex){
+        let facesAroundVertex = [];
+        let firstEdge = this.getEdgeFromVertex(vertexIndex);
+        let edge = firstEdge;
+        let tmpFace = null;
+
+        do{
+            if (this.getStartingVertexFromEdge(edge) === vertexIndex){
+                tmpFace = this.getLeftFace(edge);
+                edge = this.getBeforeEdge(edge);
+            }
+            else {
+                tmpFace = this.getRightFace(edge);
+                edge = this.getNextEdge(edge);
+            }
+            facesAroundVertex.push(tmpFace)
+        } while (edge !== firstEdge);
+
+        return facesAroundVertex
+
+    }
+
+
     getOutputTriangles() {
         let outputTriangles = [];
         for(let i = 0; i<this.facesList.length; i++){
             let faceEdge = this.facesList[i];
             if (faceEdge !== undefined){
-                outputTriangles.push(this.getVerticesAroundFace(i))
+                outputTriangles.push(this.getVerticesIndicesAroundFace(i))
 
             }
         }
@@ -261,17 +381,20 @@ function computeTriangulation(points) {
     // point 1, 2, 3 are for triangle
 
     let DCEL = new DCELStructure(points);
-    let auxiliaryPoint = points[3];
-    DCEL.addPointToTriangulatedSet(0, 3);
-    DCEL.addPointToTriangulatedSet(1, 4);
-    DCEL.addPointToTriangulatedSet(2, 5);
-    DCEL.addPointToTriangulatedSet(6, 6);
+    DCEL.addPointToTriangulatedSet(4);
+    DCEL.addPointToTriangulatedSet(5);
+    DCEL.addPointToTriangulatedSet(6);
+    DCEL.addPointToTriangulatedSet(7);
+    DCEL.addPointToTriangulatedSet(8);
+    DCEL.addPointToTriangulatedSet(9);
+    DCEL.addPointToTriangulatedSet(10);
+    DCEL.addPointToTriangulatedSet(11);
 
+    // console.log("faces around vertex 0 ", DCEL.getFacesAroundVertex(0));
 
     DCEL.printEdges();
     DCEL.printVertices();
     DCEL.printFaces();
-
 
     return DCEL.getOutputTriangles();
 
