@@ -119,35 +119,33 @@ class DCELStructure{
         let facesCountBeforeAdding = this.facesCount;
 
         this.verticesList[newPointIndex] = {'edgeIndex': edgesCountBeforeAdding, point: this.points[newPointIndex]}; //create new vertex
-        this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding; //create three new faces
-        this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 1;
-        this.facesList[facesCountBeforeAdding + 2] = edgesCountBeforeAdding + 2;
-
-
         let edgesEnclosingFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex);
+
+        this.facesList[faceIndex] = edgesCountBeforeAdding;
+        this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding + 1; //create two new faces
+        this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 2;
+
 
         this.edgesList[edgesCountBeforeAdding] = {
             'vertexStart': newPointIndex,
             'vertexEnd': this.getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(
                 edgesEnclosingFace[0], faceIndex),
+            'faceRight': faceIndex,
             'faceLeft': facesCountBeforeAdding,
-            'faceRight': facesCountBeforeAdding + 2,
             'edgeNext': edgesEnclosingFace[2],
             'edgeBefore': edgesCountBeforeAdding + 1,
         };
 
-
         this.replaceFaceIndexWithNewOne(edgesEnclosingFace[0], faceIndex, facesCountBeforeAdding);
         this.replaceEdgeWithNewOne(edgesEnclosingFace[0], edgesEnclosingFace[2], edgesCountBeforeAdding);
-        // this.edgesList[edgesEnclosingFace[0]]
 
 
         this.edgesList[edgesCountBeforeAdding + 1] = {
             'vertexStart': newPointIndex,
             'vertexEnd': this.getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(
                 edgesEnclosingFace[1], faceIndex),
-            'faceLeft': facesCountBeforeAdding + 1,
             'faceRight': facesCountBeforeAdding,
+            'faceLeft': facesCountBeforeAdding + 1,
             'edgeNext': edgesEnclosingFace[0],
             'edgeBefore': edgesCountBeforeAdding + 2,
         };
@@ -161,21 +159,17 @@ class DCELStructure{
             'vertexStart': newPointIndex,
             'vertexEnd': this.getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(
                 edgesEnclosingFace[2], faceIndex),
-            'faceLeft': facesCountBeforeAdding + 2,
+            'faceLeft': faceIndex,
             'faceRight': facesCountBeforeAdding + 1,
             'edgeNext': edgesEnclosingFace[1],
             'edgeBefore': edgesCountBeforeAdding,
         };
 
-        this.replaceFaceIndexWithNewOne(edgesEnclosingFace[2], faceIndex, facesCountBeforeAdding + 2);
         this.replaceEdgeWithNewOne(edgesEnclosingFace[2], edgesEnclosingFace[1], edgesCountBeforeAdding + 2);
 
         this.edgesCount += 3;
-        this.facesCount += 3;
-
-        this.facesList[faceIndex] = -1;
+        this.facesCount += 2;
     }
-    
 
 
     getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex) {
@@ -201,7 +195,6 @@ class DCELStructure{
                 thirdEdgeAttachedToFace = this.getBeforeEdge(secondEdgeAttachedToFace)
             }
         }
-        console.log("faceIndex: ", faceIndex, "returning: ", [thirdEdgeAttachedToFace, secondEdgeAttachedToFace, firstEdgeAttachedToFace])
         return [thirdEdgeAttachedToFace, secondEdgeAttachedToFace, firstEdgeAttachedToFace]
     }
 
@@ -254,12 +247,11 @@ class DCELStructure{
         let outputTriangles = [];
         for(let i = 0; i<this.facesList.length; i++){
             let faceEdge = this.facesList[i];
-            if (faceEdge !== undefined && faceEdge!== -1){
+            if (faceEdge !== undefined){
                 outputTriangles.push(this.getVerticesAroundFace(i))
 
             }
         }
-        console.log(outputTriangles)
         return outputTriangles
     }
 }
@@ -273,7 +265,7 @@ function computeTriangulation(points) {
     DCEL.addPointToTriangulatedSet(0, 3);
     DCEL.addPointToTriangulatedSet(1, 4);
     DCEL.addPointToTriangulatedSet(2, 5);
-    DCEL.addPointToTriangulatedSet(7, 6);
+    DCEL.addPointToTriangulatedSet(6, 6);
 
 
     DCEL.printEdges();

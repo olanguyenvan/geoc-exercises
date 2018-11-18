@@ -116,8 +116,7 @@ function drawPoint(ctx, style, origP) {
 // Draws triangles they are given in one array, an each triangle is an array of three point indices
 function drawTriangles(ctx) {
 	if (triangles != null) {
-		for(i = 0; i<triangles.length; i++) {
-		    console.log(triangles[i], points[triangles[i][0]], points[triangles[i][1]], points[triangles[i][2]])
+		for(let i = 0; i<triangles.length; i++) {
 				ctx.beginPath();
 				ctx.moveTo(transformPointToCanvas(points[triangles[i][0]]).x, transformPointToCanvas(points[triangles[i][0]]).y);
 				
