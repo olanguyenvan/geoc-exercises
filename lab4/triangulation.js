@@ -390,6 +390,13 @@ class DCELStructure{
         }
         return outputTriangles
     }
+
+
+    triangulate(){
+        for(let i=4; i < points.length; i++){
+            this.addPointToTriangulatedSet(i)
+        }
+    }
 }
 
 
@@ -397,24 +404,11 @@ function computeTriangulation(points) {
     // point 1, 2, 3 are for enclosing triangle
 
     let DCEL = new DCELStructure(points);
-    DCEL.addPointToTriangulatedSet(4);
-    DCEL.addPointToTriangulatedSet(5);
-    DCEL.addPointToTriangulatedSet(6);
-    DCEL.addPointToTriangulatedSet(7);
-    DCEL.addPointToTriangulatedSet(8);
-    DCEL.addPointToTriangulatedSet(9);
-    DCEL.addPointToTriangulatedSet(10);
-    DCEL.addPointToTriangulatedSet(11);
-    DCEL.addPointToTriangulatedSet(12);
-    DCEL.addPointToTriangulatedSet(13);
+    DCEL.triangulate();
 
     DCEL.printEdges();
     DCEL.printVertices();
     DCEL.printFaces();
 
-
     return DCEL.getOutputTriangles();
-
-
 }
-
