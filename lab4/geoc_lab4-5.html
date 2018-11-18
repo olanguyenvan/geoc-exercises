@@ -11,7 +11,7 @@
 
 <!------ TO DO: Modify this line to switch between input files ------>
 <script type="text/javascript" src="toy_example.json.js"></script>
-<!---<script type="text/javascript" src="Lanzarote.json.js"></script>--->
+<!-- -<script type="text/javascript" src="Lanzarote.json.js"></script>- -->
 
 <!---- External library to handle zoom and pan ---->
 <script type="text/javascript" src="zoompan.js"></script>
@@ -37,19 +37,77 @@ style = {
 // This is the actual input
 var points = inputJSON.points; // Requires inputJSON variable set in file
 
-var enclosingTriangle = [
-    {'x': 10, 'y': 30, 'z': 0},
-    {'x': -15, 'y': -15, 'z': 0},
-    {'x': 50, 'y':5, 'z': 0},
-];
 
-points = enclosingTriangle.concat(points);
+function computeExtremePoints(pointOfView, points){
+    let left = points[0];
+    let right = points[0];
+
+    for (let i = 1; i < points.length; i++){
+        let currentPoint = points[i];
+        if (orientationTest(pointOfView, left, currentPoint) > 0){
+            left = currentPoint;
+        }
+        else if(orientationTest(pointOfView, right, currentPoint) < 0){
+            right = currentPoint;
+        }
+    }
+    return [left, right]
+}
+
+
+function computeEnclosingTriangle(pointsToEnclose){
+    let pointWithMaximumYCoordinate = pointsToEnclose[0];
+    let pointWithMinimumYCoordinate = pointsToEnclose[0];
+
+    for(let i = 0; i < pointsToEnclose.length; i++){
+        if (points[i].y > pointWithMaximumYCoordinate.y){
+            pointWithMaximumYCoordinate = pointsToEnclose[i]
+        }
+        if (points[i].y < pointWithMinimumYCoordinate.y){
+            pointWithMinimumYCoordinate = pointsToEnclose[i]
+        }
+    }
+
+    let toAddInY = (pointWithMaximumYCoordinate.y - pointWithMinimumYCoordinate.y) / 3;
+
+    let firstVertexEnclosingTriangle = {
+        'x': pointWithMaximumYCoordinate.x,
+        'y': pointWithMaximumYCoordinate.y + toAddInY,
+        'z': pointWithMaximumYCoordinate.z
+    };
+
+    let extremePointsVisibleFromFirstVertex = computeExtremePoints(firstVertexEnclosingTriangle, pointsToEnclose);
+
+    let mostLeftPoint = extremePointsVisibleFromFirstVertex[0];
+    let mostRightPoint = extremePointsVisibleFromFirstVertex[1];
+
+    let leftTangentSlope = (pointWithMaximumYCoordinate.y - mostLeftPoint.y) / (pointWithMaximumYCoordinate.x - mostLeftPoint.x);
+    let leftbCoefficient = pointWithMaximumYCoordinate.y - leftTangentSlope * pointWithMaximumYCoordinate.x;
+    console.log(leftTangentSlope);
+    console.log(leftbCoefficient);
+    let leftTangentXCoordinate = (pointWithMinimumYCoordinate.y - leftbCoefficient)/ leftTangentSlope;
+
+
+    let rightTangentSlope = (pointWithMaximumYCoordinate.y - mostRightPoint.y) / (pointWithMaximumYCoordinate.x - mostRightPoint.x);
+    let rightbCoefficient = pointWithMaximumYCoordinate.y - rightTangentSlope * pointWithMaximumYCoordinate.x;
+    let rightTangentXCoordinate = (pointWithMinimumYCoordinate.y - rightbCoefficient)/ rightTangentSlope;
+
+
+    let enclosingTriangle = [
+        firstVertexEnclosingTriangle,
+        {'x': leftTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y - 1, 'z': 0},
+        {'x': rightTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y - 1, 'z': 0}
+    ];
+    return enclosingTriangle
+}
+
+points = computeEnclosingTriangle(points).concat(points);
 
 var boundaries = inputJSON.boundaries; // This will be used in Lab 5
 var showBoundaries = false;
 
 // IMPORTANT: if you modify the points, e.g., adding three extra points for the containing triangle, make sure to call computeExtents afterwards
-var extents = computeExtents(points.concat(enclosingTriangle)); // Required to fit points to canvas
+var extents = computeExtents(points); // Required to fit points to canvas
 
 var canvas = document.getElementsByTagName('canvas')[0];
 var ctx = canvas.getContext('2d');
@@ -176,7 +234,7 @@ function redraw(){
 
     };
 
-    drawPoints(ctx, styleForEnclosingTriangle, enclosingTriangle);
+    // drawPoints(ctx, styleForEnclosingTriangle, enclosingTriangle);
 	drawPoints(ctx, style, points);
 	drawTriangles(ctx);
 

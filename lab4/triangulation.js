@@ -385,7 +385,6 @@ class DCELStructure{
             let faceEdge = this.facesList[i];
             if (faceEdge !== undefined){
                 outputTriangles.push(this.getVerticesIndicesAroundFace(i))
-
             }
         }
         return outputTriangles
@@ -393,7 +392,7 @@ class DCELStructure{
 
 
     triangulate(){
-        for(let i=4; i < points.length; i++){
+        for(let i=4; i < this.verticesList.length; i++){
             this.addPointToTriangulatedSet(i)
         }
     }
@@ -406,9 +405,9 @@ function computeTriangulation(points) {
     let DCEL = new DCELStructure(points);
     DCEL.triangulate();
 
-    DCEL.printEdges();
-    DCEL.printVertices();
-    DCEL.printFaces();
+    // DCEL.printEdges();
+    // DCEL.printVertices();
+    // DCEL.printFaces();
 
     return DCEL.getOutputTriangles();
 }
