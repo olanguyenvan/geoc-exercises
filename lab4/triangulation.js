@@ -148,29 +148,20 @@ class DCELStructure{
     addPointToTriangulatedSet(newPointIndex){
         let newPointCoordinates = this.getVertexCoordinates(newPointIndex);
         let facesAroundFixedVertex = this.getFacesAroundVertex(this.fixedPoint);
-        let pointFound = false;
         for(let i = 0; i < facesAroundFixedVertex.length; i++){
             let faceAroundFixedVertex = facesAroundFixedVertex[i];
             // check if point is already in this face
             let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceAroundFixedVertex);
             let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
-            let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
 
+            let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
             if (pointInTriangle){
                 // console.log(pointInTriangle, "point with index", newPointIndex, " in Triangle <3 without recursive method ", verticesCoordinatesAroundFace, newPointCoordinates);
-                pointFound = true;
                 this.addPointToFace(newPointIndex, faceAroundFixedVertex);
                 break;
             }
-        }
-
-        if (!pointFound){
-            for(let i = 0; i< facesAroundFixedVertex.length; i++){
-                let faceAroundFixedVertex = facesAroundFixedVertex[i];
-
-                // check whether stabbing line goes through interior of this face, if yes, find recursively
+            else {
                 let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
-
                 let edgeNotPointingToFixedVertex = this.getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesAroundFace);
 
                 let startVertexCoordinates = this.getVertexCoordinates(this.getStartingVertexFromEdge(edgeNotPointingToFixedVertex));
@@ -379,12 +370,21 @@ class DCELStructure{
     }
 
 
-    getOutputTriangles() {
+    getOutputTriangles(withoutEnclosingTriangle) {
         let outputTriangles = [];
         for(let i = 0; i<this.facesList.length; i++){
             let faceEdge = this.facesList[i];
             if (faceEdge !== undefined){
-                outputTriangles.push(this.getVerticesIndicesAroundFace(i))
+                if (withoutEnclosingTriangle){
+                    let verticesAroundFace = this.getVerticesIndicesAroundFace(i);
+                    if (verticesAroundFace.filter(vertex => !(vertex in [0, 1, 2])).length === 3){
+                        outputTriangles.push(this.getVerticesIndicesAroundFace(i))
+                    }
+
+                }
+                else {
+                    outputTriangles.push(this.getVerticesIndicesAroundFace(i))
+                }
             }
         }
         return outputTriangles
@@ -409,5 +409,5 @@ function computeTriangulation(points) {
     // DCEL.printVertices();
     // DCEL.printFaces();
 
-    return DCEL.getOutputTriangles();
+    return DCEL.getOutputTriangles(false);
 }
