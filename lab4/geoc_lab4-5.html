@@ -10,8 +10,8 @@
 <canvas id="canvas" width="1000" height="600"></canvas>
 
 <!------ TO DO: Modify this line to switch between input files ------>
-<!--<script type="text/javascript" src="toy_example.json.js"></script>-->
-   -<script type="text/javascript" src="Lanzarote.json.js"></script>-
+<script type="text/javascript" src="toy_example.json.js"></script>
+   <!-- -<script type="text/javascript" src="Lanzarote.json.js"></script>- -->
 
 <!---- External library to handle zoom and pan ---->
 <script type="text/javascript" src="zoompan.js"></script>
@@ -35,8 +35,11 @@ style = {
 };
 
 // This is the actual input
-var points = inputJSON.points; // Requires inputJSON variable set in file
-
+var tmpPoints = inputJSON.points; // Requires inputJSON variable set in file
+let points = []
+for(let i=0; i< tmpPoints.length; i=i+1){
+    points.push(tmpPoints[i])
+}
 
 function computeExtremePoints(pointOfView, points){
     let left = points[0];
@@ -76,29 +79,43 @@ function computeEnclosingTriangle(pointsToEnclose){
         'z': pointWithMaximumYCoordinate.z
     };
 
+    let secondVertexEnclosingTriangle, thirdVertexEnclosingTriangle;
+
     let extremePointsVisibleFromFirstVertex = computeExtremePoints(firstVertexEnclosingTriangle, pointsToEnclose);
 
     let mostLeftPoint = extremePointsVisibleFromFirstVertex[0];
     let mostRightPoint = extremePointsVisibleFromFirstVertex[1];
 
-    let leftTangentSlope = (pointWithMaximumYCoordinate.y - mostLeftPoint.y) / (pointWithMaximumYCoordinate.x - mostLeftPoint.x);
-    let leftbCoefficient = pointWithMaximumYCoordinate.y - leftTangentSlope * pointWithMaximumYCoordinate.x;
-    console.log(leftTangentSlope);
-    console.log(leftbCoefficient);
-    let leftTangentXCoordinate = (pointWithMinimumYCoordinate.y - leftbCoefficient)/ leftTangentSlope;
+    if(mostLeftPoint.x === firstVertexEnclosingTriangle.x){
+        secondVertexEnclosingTriangle = {
+            "x": mostLeftPoint.x + 1, "y": pointWithMinimumYCoordinate - 1,
+        }
+    }
+    else {
+        let leftTangentSlope = (firstVertexEnclosingTriangle.y - mostLeftPoint.y) / (firstVertexEnclosingTriangle.x - mostLeftPoint.x);
+        let leftBCoefficient = firstVertexEnclosingTriangle.y - leftTangentSlope * pointWithMaximumYCoordinate.x;
+        let leftTangentXCoordinate = (pointWithMinimumYCoordinate.y - leftBCoefficient)/ leftTangentSlope;
+        console.log(leftTangentSlope, leftBCoefficient, leftTangentXCoordinate);
+        secondVertexEnclosingTriangle = {'x': leftTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y, 'z': 0}
+    }
+    
+    if(mostRightPoint.x === firstVertexEnclosingTriangle.x){
+        thirdVertexEnclosingTriangle = {
+            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate - 1,
+        }
+    }
+    else {
+        let rightTangentSlope = (firstVertexEnclosingTriangle.y - mostRightPoint.y) / (firstVertexEnclosingTriangle.x - mostRightPoint.x);
+        let rightbCoefficient = firstVertexEnclosingTriangle.y - rightTangentSlope * pointWithMaximumYCoordinate.x;
+        let rightTangentXCoordinate = (pointWithMinimumYCoordinate.y - rightbCoefficient)/ rightTangentSlope;
+        thirdVertexEnclosingTriangle = {'x': rightTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y, 'z': 0}
+    }
 
-
-    let rightTangentSlope = (pointWithMaximumYCoordinate.y - mostRightPoint.y) / (pointWithMaximumYCoordinate.x - mostRightPoint.x);
-    let rightbCoefficient = pointWithMaximumYCoordinate.y - rightTangentSlope * pointWithMaximumYCoordinate.x;
-    let rightTangentXCoordinate = (pointWithMinimumYCoordinate.y - rightbCoefficient)/ rightTangentSlope;
-
-
-    let enclosingTriangle = [
+    return [
         firstVertexEnclosingTriangle,
-        {'x': leftTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y - 1, 'z': 0},
-        {'x': rightTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y - 1, 'z': 0}
+        secondVertexEnclosingTriangle,
+        thirdVertexEnclosingTriangle
     ];
-    return enclosingTriangle
 }
 
 points = computeEnclosingTriangle(points).concat(points);
@@ -210,7 +227,15 @@ function drawBoundaries(ctx) {
 // Draws all points
 function drawPoints(ctx, style, points) {
 	//For each pair draw pair after classifying intersection
-	for (var i = 0; i < points.length; i++) {
+
+    let styleForEnclosingTriangle = {
+        point: { radius: 5, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+
+    };
+    for (let i = 0; i < 3; i++) {
+        drawPoint(ctx, styleForEnclosingTriangle, points[i]);
+    }
+	for (let i = 3; i < points.length; i++) {
 		drawPoint(ctx, style, points[i]);
 	}
 }
@@ -229,10 +254,6 @@ function redraw(){
 
 	// Draw the interesting stuff
 
-    let styleForEnclosingTriangle = {
-        point: { radius: 5, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
-
-    };
 
     // drawPoints(ctx, styleForEnclosingTriangle, enclosingTriangle);
 	drawPoints(ctx, style, points);
