@@ -3,6 +3,7 @@
 <head>
 <title>GEOC - Lab 4-5</title>
 </head>
+<button onclick="doTriangulate()">Triangulate</button>
 
 <h1>GEOC - Lab 4-5</h1>
 
@@ -11,13 +12,15 @@
 
 <!------ TO DO: Modify this line to switch between input files ------>
 <script type="text/javascript" src="toy_example.json.js"></script>
-   <!-- -<script type="text/javascript" src="Lanzarote.json.js"></script>- -->
+     <!-- -<script type="text/javascript" src="Lanzarote.json.js"></script>- -->
 
 <!---- External library to handle zoom and pan ---->
 <script type="text/javascript" src="zoompan.js"></script>
 
 <!---- This is were your triangulation code will be ---->
 <script type="text/javascript" src="point_in_triangle.js"></script>
+<script type="text/javascript" src="DCEL.js"></script>
+<script type="text/javascript" src="DCELForIncrementalTriangulation.js"></script>
 <script type="text/javascript" src="triangulation.js"></script>
 
 <script type="text/javascript">
@@ -112,11 +115,28 @@ function computeEnclosingTriangle(pointsToEnclose){
         thirdVertexEnclosingTriangle = {'x': rightTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y - 0.3 * rightTangentSlope, 'z': 0}
     }
 
-    return [
+    console.log("min: ", pointWithMinimumYCoordinate);
+
+
+    let t = [
         firstVertexEnclosingTriangle,
         thirdVertexEnclosingTriangle,
         secondVertexEnclosingTriangle,
     ];
+    let allgood = true;
+    for (let i = 0; i < points.length; i++){
+        let ot1 = orientationTest(firstVertexEnclosingTriangle, thirdVertexEnclosingTriangle, points[i]);
+        let ot2 = orientationTest(thirdVertexEnclosingTriangle, secondVertexEnclosingTriangle, points[i]);
+        let ot3 = orientationTest(secondVertexEnclosingTriangle, firstVertexEnclosingTriangle, points[i]);
+
+        if (!isInsideTriangle(ot1, ot2, ot3)){
+            allgood = false;
+            console.log("nieprawda ze w srodku... inside triangle");
+        }
+
+    }
+    console.log(allgood, points.length)
+    return t;
 }
 
 points = computeEnclosingTriangle(points).concat(points);
