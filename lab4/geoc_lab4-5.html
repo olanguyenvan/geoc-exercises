@@ -95,26 +95,27 @@ function computeEnclosingTriangle(pointsToEnclose){
         let leftTangentSlope = (firstVertexEnclosingTriangle.y - mostLeftPoint.y) / (firstVertexEnclosingTriangle.x - mostLeftPoint.x);
         let leftBCoefficient = firstVertexEnclosingTriangle.y - leftTangentSlope * pointWithMaximumYCoordinate.x;
         let leftTangentXCoordinate = (pointWithMinimumYCoordinate.y - leftBCoefficient)/ leftTangentSlope;
-        console.log(leftTangentSlope, leftBCoefficient, leftTangentXCoordinate);
-        secondVertexEnclosingTriangle = {'x': leftTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y, 'z': 0}
+        secondVertexEnclosingTriangle = {
+            'x': leftTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y + 0.3 * leftTangentSlope, 'z': 0
+        }
     }
-    
+
     if(mostRightPoint.x === firstVertexEnclosingTriangle.x){
         thirdVertexEnclosingTriangle = {
-            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate - 1,
+            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate - 1, "z": 0
         }
     }
     else {
         let rightTangentSlope = (firstVertexEnclosingTriangle.y - mostRightPoint.y) / (firstVertexEnclosingTriangle.x - mostRightPoint.x);
         let rightbCoefficient = firstVertexEnclosingTriangle.y - rightTangentSlope * pointWithMaximumYCoordinate.x;
         let rightTangentXCoordinate = (pointWithMinimumYCoordinate.y - rightbCoefficient)/ rightTangentSlope;
-        thirdVertexEnclosingTriangle = {'x': rightTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y, 'z': 0}
+        thirdVertexEnclosingTriangle = {'x': rightTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y - 0.3 * rightTangentSlope, 'z': 0}
     }
 
     return [
         firstVertexEnclosingTriangle,
+        thirdVertexEnclosingTriangle,
         secondVertexEnclosingTriangle,
-        thirdVertexEnclosingTriangle
     ];
 }
 
@@ -230,12 +231,18 @@ function drawPoints(ctx, style, points) {
 
     let styleForEnclosingTriangle = {
         point: { radius: 5, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+    };
+
+    let styleForFixedTriangle = {
+        point: { radius: 5, width: 2, color: "#CB90B6", fill: "#CB90B6", arc1: 0, arc2: 2 * Math.PI }
 
     };
+
     for (let i = 0; i < 3; i++) {
         drawPoint(ctx, styleForEnclosingTriangle, points[i]);
     }
-	for (let i = 3; i < points.length; i++) {
+    drawPoint(ctx, styleForFixedTriangle, points[3])
+	for (let i = 4; i < points.length; i++) {
 		drawPoint(ctx, style, points[i]);
 	}
 }
@@ -283,7 +290,6 @@ function doTriangulate() {
 	document.getElementById("time_label").innerHTML=string;
 	redraw();
 }
-
 
 </script>
 

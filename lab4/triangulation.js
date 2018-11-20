@@ -14,7 +14,6 @@ class DCELStructure{
         this.edgesList = new Array(3 * numberOfPoints - 6);
         this.facesCount = 0;
         this.edgesCount = 0;
-
         this.edgesList[0] = {
             'vertexStart': 0,
             'vertexEnd': 1,
@@ -103,7 +102,6 @@ class DCELStructure{
             return this.getEndingVertexFromEdge(edgeIndex);
         }
         else {
-            console.warn("an edge ", edgeIndex,  " didnt have face with index ", faceIndex);
             this.printEdges();
         }
 
@@ -144,22 +142,113 @@ class DCELStructure{
         return this.verticesList[vertexIndex].pointCoordinates
     }
 
+    addPointOnBoundary(edgeToSplit, newPointIndex){
+        let startVertex = this.getStartingVertexFromEdge(edgeToSplit);
+        let endVertex = this.getEndingVertexFromEdge(edgeToSplit);
+
+        let nextEdge = this.getNextEdge(edgeToSplit);
+        let beforeEdge = this.getBeforeEdge(edgeToSplit);
+
+
+        let leftFace = this.getLeftFace(edgeToSplit);
+        let rightFace = this.getRightFace(edgeToSplit);
+
+        let thirdEdgeInLeftFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(leftFace).filter(
+            edge => edge !== edgeToSplit && edge !== beforeEdge
+        )[0];
+        let thirdEdgeInRightFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(rightFace).filter(
+            edge => edge !== edgeToSplit && edge !== nextEdge
+        )[0];
+
+
+        let verticesAroundLeftFace = this.getVerticesIndicesAroundFace(leftFace);
+        let verticesAroundRightFace = this.getVerticesIndicesAroundFace(rightFace);
+
+        let thirdVertexFromLeftFace = verticesAroundLeftFace.filter(
+            vertex => vertex !== startVertex && vertex !== endVertex
+        )[0];
+        let thirdVertexFromRightFace = verticesAroundRightFace.filter(
+            vertex => vertex !== startVertex && vertex !== endVertex
+        )[0];
+
+        let edgesCountBeforeAdding = this.edgesCount;
+        let facesCountBeforeAdding = this.facesCount;
+
+        this.edgesCount += 3;
+        this.facesCount += 2;
+
+        this.verticesList[newPointIndex].edgeIndex = edgesCountBeforeAdding;
+        this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding + 2;
+        this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 2;
+
+        this.edgesList[edgesCountBeforeAdding] = {
+                'vertexStart': newPointIndex,
+                'vertexEnd': thirdVertexFromLeftFace,
+                'faceLeft': facesCountBeforeAdding,
+                'faceRight': leftFace,
+                'edgeNext': thirdEdgeInLeftFace,
+                'edgeBefore': edgesCountBeforeAdding + 2,
+        };
+
+
+        this.edgesList[edgesCountBeforeAdding + 1] = {
+                'vertexStart': newPointIndex,
+                'vertexEnd': thirdVertexFromRightFace,
+                'faceLeft': leftFace,
+                'faceRight': facesCountBeforeAdding + 1,
+                'edgeNext': thirdEdgeInRightFace,
+                'edgeBefore': edgeToSplit,
+        };
+
+        this.edgesList[edgesCountBeforeAdding + 2] = {
+            'vertexStart': startVertex,
+            'vertexEnd': newPointIndex,
+            'faceLeft': facesCountBeforeAdding,
+            'faceRight': facesCountBeforeAdding + 1,
+            'edgeNext': edgesCountBeforeAdding + 1,
+            'edgeBefore': beforeEdge,
+        };
+
+        this.edgesList[edgeToSplit].vertexStart = newPointIndex;
+        this.edgesList[edgeToSplit].edgeBefore = edgesCountBeforeAdding;
+
+        this.replaceFaceIndexWithNewOne(beforeEdge, leftFace, facesCountBeforeAdding);
+        this.replaceFaceIndexWithNewOne(thirdEdgeInRightFace, rightFace, facesCountBeforeAdding + 1);
+    }
 
     addPointToTriangulatedSet(newPointIndex){
         let newPointCoordinates = this.getVertexCoordinates(newPointIndex);
         let facesAroundFixedVertex = this.getFacesAroundVertex(this.fixedPoint);
+
         for(let i = 0; i < facesAroundFixedVertex.length; i++){
             let faceAroundFixedVertex = facesAroundFixedVertex[i];
             // check if point is already in this face
             let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceAroundFixedVertex);
             let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
 
-            let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
-            if (pointInTriangle){
-                // console.log(pointInTriangle, "point with index", newPointIndex, " in Triangle <3 without recursive method ", verticesCoordinatesAroundFace, newPointCoordinates);
+            let triangle = getTriangleInCounterClockWiseOrder(verticesCoordinatesAroundFace);
+            let vertex1 = triangle[0];
+            let vertex2 = triangle[1];
+            let vertex3 = triangle[2];
+            let ot1 = orientationTest(vertex1, vertex2, newPointCoordinates);
+            let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
+            let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
+
+            if (isInsideTriangle(ot1, ot2, ot3)){
                 this.addPointToFace(newPointIndex, faceAroundFixedVertex);
                 break;
             }
+
+            // let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+            else if (isOnBoundaryOfTriangle(ot1, ot2, ot3)) {
+                let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
+                let edgeToSplit = edgesAroundFace.filter(
+                    edge => orientationTest(this.getVertexCoordinates(this.getStartingVertexFromEdge(edge)),
+                        this.getVertexCoordinates(this.getEndingVertexFromEdge(edge)), newPointCoordinates) === 0
+                )[0];
+                this.addPointOnBoundary(edgeToSplit, newPointIndex)
+            }
+
             else {
                 let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
                 let edgeNotPointingToFixedVertex = this.getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesAroundFace);
@@ -186,11 +275,25 @@ class DCELStructure{
         let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceIndex);
         let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
 
-        let pointInTriangle =  isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+        let vertex1 = verticesCoordinatesAroundFace[0];
+        let vertex2 = verticesCoordinatesAroundFace[1];
+        let vertex3 = verticesCoordinatesAroundFace[2];
+        let ot1 = orientationTest(vertex1, vertex2, newPointCoordinates);
+        let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
+        let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
 
-        if (pointInTriangle){
+        // let pointInTriangle =  isInsideTriangle(ot1, ot2, ot3);;
+
+        if (isInsideTriangle(ot1, ot2, ot3)){
             return faceIndex
         }
+
+        let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+        if (pointOnBoundaryOfTriangle) {
+            console.log("\n\n\n\n\n\n!!!!!!!!!!!!!!!!!point on boundary", edgeEnteredBy, faceIndex, newPointCoordinates)
+            // return;
+        }
+
 
         let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex);
         let edgesToCheckWhetherTheyCrossWithStabbingLine = edgesAroundFace.filter(edge => edge !== edgeEnteredBy);
@@ -366,7 +469,6 @@ class DCELStructure{
         } while (edge !== firstEdge);
 
         return facesAroundVertex
-
     }
 
 
@@ -392,9 +494,26 @@ class DCELStructure{
 
 
     triangulate(){
-        for(let i=4; i < this.verticesList.length; i++){
-            this.addPointToTriangulatedSet(i)
+        for(let i=4; i < 4; i++){
+            try{
+                this.addPointToTriangulatedSet(i)
+            }
+            catch(error){
+                console.warn("problem with point no: ", i);
+                console.warn(error);
+                break;
+            }
         }
+        try{
+            this.addPointToTriangulatedSet(4);
+            this.addPointToTriangulatedSet(5);
+            this.addPointToTriangulatedSet(6);
+            // this.addPointToTriangulatedSet(7);
+            // this.addPointToTriangulatedSet(8);
+        }
+        catch(error){
+            console.warn(error);
+            }
     }
 }
 
@@ -405,9 +524,9 @@ function computeTriangulation(points) {
     let DCEL = new DCELStructure(points);
     DCEL.triangulate();
 
-    // DCEL.printEdges();
-    // DCEL.printVertices();
-    // DCEL.printFaces();
+    DCEL.printEdges();
+    DCEL.printVertices();
+    DCEL.printFaces();
 
     return DCEL.getOutputTriangles(false);
 }
