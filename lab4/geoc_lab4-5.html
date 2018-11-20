@@ -88,7 +88,7 @@ function computeEnclosingTriangle(pointsToEnclose){
 
     if(mostLeftPoint.x === firstVertexEnclosingTriangle.x){
         secondVertexEnclosingTriangle = {
-            "x": mostLeftPoint.x + 1, "y": pointWithMinimumYCoordinate - 1,
+            "x": mostLeftPoint.x + 1, "y": pointWithMinimumYCoordinate.y - 1,
         }
     }
     else {
@@ -102,7 +102,7 @@ function computeEnclosingTriangle(pointsToEnclose){
 
     if(mostRightPoint.x === firstVertexEnclosingTriangle.x){
         thirdVertexEnclosingTriangle = {
-            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate - 1, "z": 0
+            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate.y - 1, "z": 0
         }
     }
     else {
