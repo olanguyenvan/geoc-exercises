@@ -156,8 +156,7 @@ class DCELForIncrementalTriangulation extends DCEL{
             let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
             let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
 
-            if (isInsideTriangle(ot1, ot2, ot3)){
-                console.log("inside triangle", faceAroundFixedVertex);
+            if (isInsideTriangleByDeterminants(ot1, ot2, ot3)){
                 this.addPointToFace(newPointIndex, faceAroundFixedVertex);
                 break;
             }
@@ -208,7 +207,7 @@ class DCELForIncrementalTriangulation extends DCEL{
         let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
 
 
-        if (isInsideTriangle(ot1, ot2, ot3)){
+        if (isInsideTrianglByDeterminants(ot1, ot2, ot3)){
             return faceIndex
         }
 
@@ -322,4 +321,3 @@ class DCELForIncrementalTriangulation extends DCEL{
         //     }
     }
 }
-// exports DCELForIncrementalTriangulation;

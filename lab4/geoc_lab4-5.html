@@ -18,7 +18,7 @@
 <script type="text/javascript" src="zoompan.js"></script>
 
 <!---- This is were your triangulation code will be ---->
-<script type="text/javascript" src="point_in_triangle.js"></script>
+<script type="text/javascript" src="utils.js"></script>
 <script type="text/javascript" src="DCEL.js"></script>
 <script type="text/javascript" src="DCELForIncrementalTriangulation.js"></script>
 <script type="text/javascript" src="triangulation.js"></script>
@@ -44,100 +44,6 @@ for(let i=0; i< tmpPoints.length; i=i+1){
     points.push(tmpPoints[i])
 }
 
-function computeExtremePoints(pointOfView, points){
-    let left = points[0];
-    let right = points[0];
-
-    for (let i = 1; i < points.length; i++){
-        let currentPoint = points[i];
-        if (orientationTest(pointOfView, left, currentPoint) > 0){
-            left = currentPoint;
-        }
-        else if(orientationTest(pointOfView, right, currentPoint) < 0){
-            right = currentPoint;
-        }
-    }
-    return [left, right]
-}
-
-
-function computeEnclosingTriangle(pointsToEnclose){
-    let pointWithMaximumYCoordinate = pointsToEnclose[0];
-    let pointWithMinimumYCoordinate = pointsToEnclose[0];
-
-    for(let i = 0; i < pointsToEnclose.length; i++){
-        if (points[i].y > pointWithMaximumYCoordinate.y){
-            pointWithMaximumYCoordinate = pointsToEnclose[i]
-        }
-        if (points[i].y < pointWithMinimumYCoordinate.y){
-            pointWithMinimumYCoordinate = pointsToEnclose[i]
-        }
-    }
-
-    let toAddInY = (pointWithMaximumYCoordinate.y - pointWithMinimumYCoordinate.y) ;
-
-    let firstVertexEnclosingTriangle = {
-        'x': pointWithMaximumYCoordinate.x,
-        'y': pointWithMaximumYCoordinate.y + toAddInY,
-        'z': pointWithMaximumYCoordinate.z
-    };
-
-    let secondVertexEnclosingTriangle, thirdVertexEnclosingTriangle;
-
-    let extremePointsVisibleFromFirstVertex = computeExtremePoints(firstVertexEnclosingTriangle, pointsToEnclose);
-
-    let mostLeftPoint = extremePointsVisibleFromFirstVertex[0];
-    let mostRightPoint = extremePointsVisibleFromFirstVertex[1];
-
-    if(mostLeftPoint.x === firstVertexEnclosingTriangle.x){
-        secondVertexEnclosingTriangle = {
-            "x": mostLeftPoint.x + 1, "y": pointWithMinimumYCoordinate.y - 1,
-        }
-    }
-    else {
-        let leftTangentSlope = (firstVertexEnclosingTriangle.y - mostLeftPoint.y) / (firstVertexEnclosingTriangle.x - mostLeftPoint.x);
-        let leftBCoefficient = firstVertexEnclosingTriangle.y - leftTangentSlope * pointWithMaximumYCoordinate.x;
-        let leftTangentXCoordinate = (pointWithMinimumYCoordinate.y - leftBCoefficient)/ leftTangentSlope;
-        secondVertexEnclosingTriangle = {
-            'x': leftTangentXCoordinate + 1, 'y': pointWithMinimumYCoordinate.y + 0.3 * leftTangentSlope, 'z': 0
-        }
-    }
-
-    if(mostRightPoint.x === firstVertexEnclosingTriangle.x){
-        thirdVertexEnclosingTriangle = {
-            "x": mostRightPoint.x - 1, "y": pointWithMinimumYCoordinate.y - 1, "z": 0
-        }
-    }
-    else {
-        let rightTangentSlope = (firstVertexEnclosingTriangle.y - mostRightPoint.y) / (firstVertexEnclosingTriangle.x - mostRightPoint.x);
-        let rightbCoefficient = firstVertexEnclosingTriangle.y - rightTangentSlope * pointWithMaximumYCoordinate.x;
-        let rightTangentXCoordinate = (pointWithMinimumYCoordinate.y - rightbCoefficient)/ rightTangentSlope;
-        thirdVertexEnclosingTriangle = {'x': rightTangentXCoordinate - 1, 'y': pointWithMinimumYCoordinate.y - 0.3 * rightTangentSlope, 'z': 0}
-    }
-
-    console.log("min: ", pointWithMinimumYCoordinate);
-
-
-    let t = [
-        firstVertexEnclosingTriangle,
-        thirdVertexEnclosingTriangle,
-        secondVertexEnclosingTriangle,
-    ];
-    let allgood = true;
-    for (let i = 0; i < points.length; i++){
-        let ot1 = orientationTest(firstVertexEnclosingTriangle, thirdVertexEnclosingTriangle, points[i]);
-        let ot2 = orientationTest(thirdVertexEnclosingTriangle, secondVertexEnclosingTriangle, points[i]);
-        let ot3 = orientationTest(secondVertexEnclosingTriangle, firstVertexEnclosingTriangle, points[i]);
-
-        if (!isInsideTriangle(ot1, ot2, ot3)){
-            allgood = false;
-            console.log("nieprawda ze w srodku... inside triangle");
-        }
-
-    }
-    console.log(allgood, points.length)
-    return t;
-}
 
 points = computeEnclosingTriangle(points).concat(points);
 
