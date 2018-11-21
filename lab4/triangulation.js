@@ -6,9 +6,9 @@ function computeTriangulation(points) {
     let DCEL = new DCELForIncrementalTriangulation(points);
     DCEL.triangulate();
 
-    DCEL.printEdges();
-    DCEL.printVertices();
-    DCEL.printFaces();
+    // DCEL.printEdges();
+    // DCEL.printVertices();
+    // DCEL.printFaces();
 
     return DCEL.getOutputTriangles(false);
 }

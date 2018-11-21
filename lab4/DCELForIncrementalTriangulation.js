@@ -39,7 +39,6 @@ class DCELForIncrementalTriangulation extends DCEL{
         this.facesList[0] = 0;
         this.facesCount += 1;
 
-
         this.verticesList[0].edgeIndex = 0;
         this.verticesList[1].edgeIndex = 1;
         this.verticesList[2].edgeIndex = 2;
@@ -144,22 +143,13 @@ class DCELForIncrementalTriangulation extends DCEL{
             let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceAroundFixedVertex);
             let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
 
-            let triangle = getTriangleInCounterClockWiseOrder(verticesCoordinatesAroundFace);
-            let vertex1 = triangle[0];
-            let vertex2 = triangle[1];
-            let vertex3 = triangle[2];
-
-            let ot1 = orientationTest(vertex1, vertex2, newPointCoordinates);
-            let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
-            let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
-
-            if (isInsideTriangleByDeterminants(ot1, ot2, ot3)){
+            if (isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates)){
                 this.addPointToFace(newPointIndex, faceAroundFixedVertex);
                 break;
             }
 
             // let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
-            else if (isOnBoundaryOfTriangle(ot1, ot2, ot3)) {
+            else if (isOnBoundaryOfTriangle(verticesIndicesAroundFace, newPointCoordinates)) {
                 let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
                 let edgeToSplit = edgesAroundFace.filter(
                     edge => orientationTest(this.getVertexCoordinates(this.getStartingVertexFromEdge(edge)),
@@ -194,15 +184,7 @@ class DCELForIncrementalTriangulation extends DCEL{
         let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceIndex);
         let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
 
-        let vertex1 = verticesCoordinatesAroundFace[0];
-        let vertex2 = verticesCoordinatesAroundFace[1];
-        let vertex3 = verticesCoordinatesAroundFace[2];
-        let ot1 = orientationTest(vertex1, vertex2, newPointCoordinates);
-        let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
-        let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
-
-
-        if (isInsideTriangleByDeterminants(ot1, ot2, ot3)){
+        if (isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates)){
             return faceIndex
         }
 
@@ -237,19 +219,14 @@ class DCELForIncrementalTriangulation extends DCEL{
         let edgesCountBeforeAdding = this.edgesCount;
         let facesCountBeforeAdding = this.facesCount;
 
-        this.verticesList[newPointIndex].edgeIndex = edgesCountBeforeAdding; //add information about edge
         let edgesEnclosingFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex);
-        this.facesList[faceIndex] = edgesCountBeforeAdding;
-        this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding + 1; //create two new faces
-        this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 2;
-
 
         this.edgesList[edgesCountBeforeAdding] = {
             'vertexStart': newPointIndex,
             'vertexEnd': this.getStartingVertexFromEdgeWithRespectToFaceBeingOnLeft(
                 edgesEnclosingFace[0], faceIndex),
-            'faceRight': faceIndex,
             'faceLeft': facesCountBeforeAdding,
+            'faceRight': faceIndex,
             'edgeNext': edgesEnclosingFace[2],
             'edgeBefore': edgesCountBeforeAdding + 1,
         };
@@ -282,6 +259,10 @@ class DCELForIncrementalTriangulation extends DCEL{
         };
 
         this.replaceEdgeWithNewOne(edgesEnclosingFace[2], edgesEnclosingFace[1], edgesCountBeforeAdding + 2);
+        this.verticesList[newPointIndex].edgeIndex = edgesCountBeforeAdding; //add information about edge
+        this.facesList[faceIndex] = edgesCountBeforeAdding;
+        this.facesList[facesCountBeforeAdding] = edgesCountBeforeAdding + 1; //create two new faces
+        this.facesList[facesCountBeforeAdding + 1] = edgesCountBeforeAdding + 2;
 
         this.edgesCount += 3;
         this.facesCount += 2;
@@ -289,7 +270,7 @@ class DCELForIncrementalTriangulation extends DCEL{
 
 
     triangulate(){
-        for(let i=4; i < 6; i++){
+        for(let i=4; i < this.verticesList.length; i++){
             try{
                 this.addPointToTriangulatedSet(i)
             }
@@ -299,20 +280,5 @@ class DCELForIncrementalTriangulation extends DCEL{
                 break;
             }
         }
-        this.printEdges();
-        this.printVertices();
-        this.printFaces();
-
-        // this.addPointToTriangulatedSet(6)
-        // try{
-        //     this.addPointToTriangulatedSet(4);
-        //     this.addPointToTriangulatedSet(5);
-        //     this.addPointToTriangulatedSet(6);
-        //     // this.addPointToTriangulatedSet(7);
-        //     // this.addPointToTriangulatedSet(8);
-        // }
-        // catch(error){
-        //     console.warn(error);
-        //     }
     }
 }

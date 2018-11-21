@@ -14,7 +14,6 @@ class DCEL{
         this.edgesList = new Array(3 * numberOfPoints - 6);
         this.verticesList = new Array(numberOfPoints);
 
-
         for(let i = 0; i < points.length; i++){
             this.verticesList[i] = {pointCoordinates: points[i]}
         }
@@ -67,7 +66,8 @@ class DCEL{
             return this.getEndingVertexFromEdge(edgeIndex);
         }
         else {
-            this.printEdges();
+            // this.printEdges();
+            console.warn("this edge",edgeIndex, "doesnt have this face", faceIndex)
         }
 
     }

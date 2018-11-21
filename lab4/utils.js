@@ -35,10 +35,25 @@ function isInsideTriangle(triangle, pointCoordinates){
 }
 
 
-function isOnBoundaryOfTriangle(ot1, ot2, ot3){
+function isOnBoundaryOfTriangleByDeterminants(ot1, ot2, ot3){
     let sumOfSignFunctionOfOrientationTest = Math.sign(ot1) + Math.sign(ot2) + Math.sign(ot3);
     return sumOfSignFunctionOfOrientationTest === 2;
 }
+
+
+function isOnBoundaryOfTriangle(triangle, point){
+    let triangleInCounterClockwiseOrder = getTriangleInCounterClockWiseOrder(triangle);
+    let vertex1 = triangleInCounterClockwiseOrder[0];
+    let vertex2 = triangleInCounterClockwiseOrder[1];
+    let vertex3 = triangleInCounterClockwiseOrder[2];
+
+    let ot1 = orientationTest(vertex1, vertex2, point);
+    let ot2 = orientationTest(vertex2, vertex3, point);
+    let ot3 = orientationTest(vertex3, vertex1, point);
+    let sumOfSignFunctionOfOrientationTest = Math.sign(ot1) + Math.sign(ot2) + Math.sign(ot3);
+    return sumOfSignFunctionOfOrientationTest === 2;
+}
+
 
 
 function isAVertexOfTriangle(ot1, ot2, ot3){
