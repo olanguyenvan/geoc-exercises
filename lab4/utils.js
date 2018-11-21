@@ -19,11 +19,7 @@ function getTriangleInCounterClockWiseOrder(triangle){
 
 
 function isInsideTriangleByDeterminants(ot1, ot2, ot3){
-    // console.log("is inside triangle");
-    // console.log(ot1, ot2, ot3)
-    let t= ot1 > 0 && ot2 > 0 && ot3 > 0
-    // console.log(t);
-    return t
+    return ot1 > 0 && ot2 > 0 && ot3 > 0
 }
 
 function isInsideTriangle(triangle, pointCoordinates){

@@ -137,10 +137,8 @@ class DCELForIncrementalTriangulation extends DCEL{
     addPointToTriangulatedSet(newPointIndex){
         let newPointCoordinates = this.getVertexCoordinates(newPointIndex);
         let facesAroundFixedVertex = this.getFacesAroundVertex(this.fixedPoint);
-        console.log('faces around fixed vertex', facesAroundFixedVertex);
         for(let i = 0; i < facesAroundFixedVertex.length; i++){
             let faceAroundFixedVertex = facesAroundFixedVertex[i];
-            console.log("face around fixed vertex proceessed now", faceAroundFixedVertex)
 
             // check if point is already in this face
             let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceAroundFixedVertex);
@@ -151,7 +149,6 @@ class DCELForIncrementalTriangulation extends DCEL{
             let vertex2 = triangle[1];
             let vertex3 = triangle[2];
 
-            console.log("check if cck", vertex1, vertex2, vertex3)
             let ot1 = orientationTest(vertex1, vertex2, newPointCoordinates);
             let ot2 = orientationTest(vertex2, vertex3, newPointCoordinates);
             let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
@@ -172,7 +169,6 @@ class DCELForIncrementalTriangulation extends DCEL{
             }
 
             else {
-                console.log("got to else")
                 let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
                 let edgeNotPointingToFixedVertex = this.getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesAroundFace);
 
@@ -195,7 +191,6 @@ class DCELForIncrementalTriangulation extends DCEL{
     }
 
     recursivelySearchByStabbingLine(edgeEnteredBy, faceIndex, newPointCoordinates){
-        console.log("recurs by stabb ", edgeEnteredBy, faceIndex, newPointCoordinates)
         let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceIndex);
         let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
 
@@ -207,7 +202,7 @@ class DCELForIncrementalTriangulation extends DCEL{
         let ot3 = orientationTest(vertex3, vertex1, newPointCoordinates);
 
 
-        if (isInsideTrianglByDeterminants(ot1, ot2, ot3)){
+        if (isInsideTriangleByDeterminants(ot1, ot2, ot3)){
             return faceIndex
         }
 
