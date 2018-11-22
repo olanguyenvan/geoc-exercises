@@ -66,15 +66,12 @@ class DCEL{
             return this.getEndingVertexFromEdge(edgeIndex);
         }
         else {
-            // this.printEdges();
             console.warn("this edge",edgeIndex, "doesnt have this face", faceIndex)
         }
-
     }
 
 
     replaceFaceIndexWithNewOne(edgeIndex, previousFaceIndex, newFaceIndex){
-        // will detect whether to replace right or left face
         if (this.getLeftFace(edgeIndex) === previousFaceIndex){
             this.edgesList[edgeIndex].faceLeft = newFaceIndex
         }
@@ -219,5 +216,4 @@ class DCEL{
         }
         return outputTriangles
     }
-
 }

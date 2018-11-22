@@ -11,8 +11,8 @@
 <canvas id="canvas" width="1000" height="600"></canvas>
 
 <!------ TO DO: Modify this line to switch between input files ------>
-<script type="text/javascript" src="points_data/toy_example.json.js"></script>
-     <!-- -<script type="text/javascript" src="Lanzarote.json.js"></script>- -->
+<!--<script type="text/javascript" src="points_data/toy_example.json.js"></script>-->
+       -<script type="text/javascript" src="points_data/lanzarote.json.js"></script>-
 
 <!---- External library to handle zoom and pan ---->
 <script type="text/javascript" src="zoompan.js"></script>
@@ -37,14 +37,8 @@ style = {
   }
 };
 
-// This is the actual input
-var tmpPoints = inputJSON.points; // Requires inputJSON variable set in file
-let points = []
-for(let i=0; i< tmpPoints.length; i=i+1){
-    points.push(tmpPoints[i])
-}
-
-
+let fixedPointIndex;
+let points = inputJSON.points;
 points = computeEnclosingTriangle(points).concat(points);
 
 var boundaries = inputJSON.boundaries; // This will be used in Lab 5
@@ -167,8 +161,11 @@ function drawPoints(ctx, style, points) {
     for (let i = 0; i < 3; i++) {
         drawPoint(ctx, styleForEnclosingTriangle, points[i]);
     }
-    drawPoint(ctx, styleForFixedTriangle, points[3])
+
 	for (let i = 4; i < points.length; i++) {
+        if( i === fixedPointIndex){
+            drawPoint(ctx, styleForFixedTriangle, points[fixedPointIndex]);
+        }
 		drawPoint(ctx, style, points[i]);
 	}
 }
@@ -185,10 +182,6 @@ function redraw(){
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 	ctx.restore();
 
-	// Draw the interesting stuff
-
-
-    // drawPoints(ctx, styleForEnclosingTriangle, enclosingTriangle);
 	drawPoints(ctx, style, points);
 	drawTriangles(ctx);
 
@@ -204,15 +197,16 @@ function toggleShowBoundaries() {
 
 function doTriangulate() {
 	// Measure time
-	var t0 = performance.now();
-	triangles = computeTriangulation(points); // This function is in triangulation.js
-	var t1 = performance.now();
+	let t0 = performance.now();
+	let triangulation = getTriangulationResults(points);
+	triangles = triangulation.triangles;
+	fixedPointIndex = triangulation.fixedPointIndex;
+	console.log("fixed point index", fixedPointIndex)
+	let t1 = performance.now();
 
-	// Log time
 	var string = "Vertices: " + points.length + ". Triangles: " + triangles.length;
 	string += ". Triangulation time: " + (t1 - t0).toFixed(0) + " milliseconds.";
 	console.log(string);
-	// Also show it in page
 	document.getElementById("time_label").innerHTML=string;
 	redraw();
 }

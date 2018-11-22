@@ -1,14 +1,15 @@
 
 
-function computeTriangulation(points) {
+function getTriangulationResults(points) {
     // point 1, 2, 3 are for enclosing triangle
 
     let DCEL = new DCELForIncrementalTriangulation(points);
     DCEL.triangulate();
 
-    // DCEL.printEdges();
-    // DCEL.printVertices();
-    // DCEL.printFaces();
+    let fixedPointIndex = DCEL.getFixedPointIndex();
 
-    return DCEL.getOutputTriangles(false);
+    return {
+        'triangles': DCEL.getOutputTriangles(false),
+        'fixedPointIndex': fixedPointIndex,
+    }
 }

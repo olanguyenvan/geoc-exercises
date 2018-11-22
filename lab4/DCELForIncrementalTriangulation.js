@@ -43,11 +43,53 @@ class DCELForIncrementalTriangulation extends DCEL{
         this.verticesList[1].edgeIndex = 1;
         this.verticesList[2].edgeIndex = 2;
 
-        this.fixedPoint = 3;
+        this.fixedPoint = this.chooseFixedPointIndex(points);
         this.fixedPointCoordinates = this.getVertexCoordinates(this.fixedPoint);
-        this.addPointToFace(3, 0);
+        this.addPointToFace(this.fixedPoint, 0);
+        this.triangulatedCount = 4;
     }
 
+
+    getFixedPointIndex(){
+        return this.fixedPoint;
+    }
+
+
+    chooseFixedPointIndex(points){
+        let minimumXCoordinate = points[0].x;
+        let maximumXCoordinate = points[0].x;
+        let minimumYCoordinate = points[0].y;
+        let maximumYCoordinate = points[0].y;
+        for(let i=3; i < points.length; i++){ // dont look at enclosing triangle
+            minimumXCoordinate = Math.min(minimumXCoordinate, points[i].x);
+            maximumXCoordinate = Math.max(maximumXCoordinate, points[i].x);
+            minimumYCoordinate = Math.min(minimumYCoordinate, points[i].y);
+            maximumYCoordinate = Math.max(maximumYCoordinate, points[i].y);
+        }
+
+        let xSpan = (maximumXCoordinate - minimumXCoordinate) / 5;
+        let ySpan = (maximumYCoordinate - minimumYCoordinate) / 5;
+
+        let xValuesInTheMiddleStart = (minimumXCoordinate + maximumXCoordinate) / 2 - xSpan;
+        let xValuesInTheMiddleEnd = (minimumXCoordinate + maximumXCoordinate) / 2 + xSpan;
+
+
+        let yValuesInTheMiddleStart = (minimumYCoordinate + maximumYCoordinate) / 2 - ySpan;
+        let yValuesInTheMiddleEnd = (minimumYCoordinate + maximumYCoordinate) / 2 + ySpan;
+        let matchingX;
+        for(let i=3; i < points.length; i++){// dont look at enclosing triangle
+            if ( (xValuesInTheMiddleStart < points[i].x) && (points[i].x  < xValuesInTheMiddleEnd)){
+                matchingX = i;
+                if ( (yValuesInTheMiddleStart < points[i].y) && (points[i].y  < yValuesInTheMiddleEnd) ) {
+                    return i;
+                }
+            }
+
+        }
+        if (matchingX)
+            return matchingX;
+        return 3;
+    }
 
     getEdgeThatDoesntPointToFixedVertexFromSetOfEdges(edgesIndices){
         for(let i=0; i < edgesIndices.length; i++){
@@ -145,18 +187,21 @@ class DCELForIncrementalTriangulation extends DCEL{
 
             if (isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates)){
                 this.addPointToFace(newPointIndex, faceAroundFixedVertex);
+                this.triangulatedCount++;
                 break;
             }
 
             // let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
-            else if (isOnBoundaryOfTriangle(verticesIndicesAroundFace, newPointCoordinates)) {
-                let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
-                let edgeToSplit = edgesAroundFace.filter(
-                    edge => orientationTest(this.getVertexCoordinates(this.getStartingVertexFromEdge(edge)),
-                        this.getVertexCoordinates(this.getEndingVertexFromEdge(edge)), newPointCoordinates) === 0
-                )[0];
-                this.addPointOnBoundary(edgeToSplit, newPointIndex)
-            }
+            // else if (isOnBoundaryOfTriangle(verticesIndicesAroundFace, newPointCoordinates)) {
+            //     let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
+            //     let edgeToSplit = edgesAroundFace.filter(
+            //         edge => orientationTest(this.getVertexCoordinates(this.getStartingVertexFromEdge(edge)),
+            //             this.getVertexCoordinates(this.getEndingVertexFromEdge(edge)), newPointCoordinates) === 0
+            //     )[0];
+            //     this.addPointOnBoundary(edgeToSplit, newPointIndex);
+            //     this.triangulatedCount++;
+            //     break;
+            // }
 
             else {
                 let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceAroundFixedVertex);
@@ -174,6 +219,7 @@ class DCELForIncrementalTriangulation extends DCEL{
                     let nextFaceToSearch = this.getOtherFaceFromEdge(edgeNotPointingToFixedVertex, faceAroundFixedVertex);
                     let foundFace =  this.recursivelySearchByStabbingLine(edgeNotPointingToFixedVertex, nextFaceToSearch, newPointCoordinates);
                     this.addPointToFace(newPointIndex, foundFace);
+                    this.triangulatedCount++;
                     break;
                 }
             }
@@ -187,12 +233,12 @@ class DCELForIncrementalTriangulation extends DCEL{
         if (isInsideTriangle(verticesCoordinatesAroundFace, newPointCoordinates)){
             return faceIndex
         }
-
-        let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
-        if (pointOnBoundaryOfTriangle) {
-            console.log("\n\n\n\n\n\n!!!!!!!!!!!!!!!!!point on boundary", edgeEnteredBy, faceIndex, newPointCoordinates)
-            // return;
-        }
+        //
+        // let pointOnBoundaryOfTriangle = isOnBoundaryOfTriangle(verticesCoordinatesAroundFace, newPointCoordinates);
+        // if (pointOnBoundaryOfTriangle) {
+        //     console.log("\n\n\n\n\n\n!!!!!!!!!!!!!!!!!point on boundary", edgeEnteredBy, faceIndex, newPointCoordinates)
+        //     // return;
+        // }
 
         let edgesAroundFace = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceIndex);
         let edgesToCheckWhetherTheyCrossWithStabbingLine = edgesAroundFace.filter(edge => edge !== edgeEnteredBy);
@@ -215,7 +261,6 @@ class DCELForIncrementalTriangulation extends DCEL{
 
 
     addPointToFace(newPointIndex, faceIndex){
-        faceIndex = parseInt(faceIndex); //WTF
         let edgesCountBeforeAdding = this.edgesCount;
         let facesCountBeforeAdding = this.facesCount;
 
@@ -270,15 +315,20 @@ class DCELForIncrementalTriangulation extends DCEL{
 
 
     triangulate(){
-        for(let i=4; i < this.verticesList.length; i++){
-            try{
-                this.addPointToTriangulatedSet(i)
+        for(let i=3; i < this.verticesList.length; i+=1){
+            if(i !== this.fixedPoint){
+                try{
+                    this.addPointToTriangulatedSet(i)
+                }
+                catch(error){
+                    console.warn("problem with point no: ", i);
+                    console.warn(error);
+                    break;
+                }
             }
-            catch(error){
-                console.warn("problem with point no: ", i);
-                console.warn(error);
-                break;
-            }
+
         }
+
+        console.log("Triangulated", this.triangulatedCount, "points in total out of", this.verticesList.length)
     }
 }
