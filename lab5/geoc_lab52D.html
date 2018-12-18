@@ -13,12 +13,13 @@
 
 <!------ TO DO: Modify this line to switch between input files ------>
 <!--<script type="text/javascript" src="points_data/toy_example.json.js"></script>-->
-        -<script type="text/javascript" src="points_data/Lanzarote-small.json.js"></script>-
+        -<script type="text/javascript" src="points_data/toy_example.json.js"></script>-
 
 <!---- External library to handle zoom and pan ---->
 <script type="text/javascript" src="zoompan.js"></script>
 
 <!---- This is were your triangulation code will be ---->
+<script type="text/javascript" src="math.min.js"></script>
 <script type="text/javascript" src="utils.js"></script>
 <script type="text/javascript" src="DCEL.js"></script>
 <script type="text/javascript" src="DCELForDelaunayTriangulation.js"></script>
@@ -96,11 +97,11 @@ function transformPointToCanvas(p) {
 }
 
 // Draws one point as a circle
-function drawPoint(ctx, style, origP) {
+function drawPoint(ctx, styleForPoint, origP) {
 	var p = transformPointToCanvas(origP);
-    ctx.lineWidth = style.point.width;
-    ctx.strokeStyle = style.point.color;
-    ctx.fillStyle = style.point.fill;
+    ctx.lineWidth = styleForPoint.point.width;
+    ctx.strokeStyle = styleForPoint.point.color;
+    ctx.fillStyle = styleForPoint.point.fill;
     ctx.beginPath();
     ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
     ctx.fill();
@@ -155,20 +156,37 @@ function drawPoints(ctx, style, points) {
     };
 
     let styleForFixedTriangle = {
-        point: { radius: 5, width: 2, color: "#CB90B6", fill: "#CB90B6", arc1: 0, arc2: 2 * Math.PI }
-
+        point: { radius: 5, width: 3, color: "#1f6bcb", fill: "#995c17", arc1: 0, arc2: 2 * Math.PI }
     };
+
+    let colors = [
+        "yellow", "#cba31e", "orange", "red", "pink","blue", "#32cbbe","#49cb4d","brown", "black"
+    ];
 
     for (let i = 0; i < 3; i++) {
         drawPoint(ctx, styleForEnclosingTriangle, points[i]);
     }
 
-	for (let i = 4; i < points.length; i++) {
-        if( i === fixedPointIndex){
+    let styleForPoints = {
+        point: { radius: 5, width: 3, color: "#000000", fill: "#998f13", arc1: 0, arc2: 2 * Math.PI }
+    };
+    console.log("fixed point index:", fixedPointIndex)
+	for (let i = 3; i < points.length; i++) {
+	    console.log(i);
+        if( i === fixedPointIndex) {
+            console.log("lol")
             drawPoint(ctx, styleForFixedTriangle, points[fixedPointIndex]);
         }
-		drawPoint(ctx, style, points[i]);
+        else {
+            styleForPoints.point.color = colors[(i - 3) % colors.length];
+            // drawPoint(ctx, styleForPoints, points[i]);
+            drawPoint(ctx, styleForPoints, points[i]);
+
+        }
 	}
+    ctx.lineWidth = style.point.width;
+    ctx.strokeStyle = style.point.color;
+    ctx.fillStyle = style.point.fill;
 }
 
 // Redraws the whole canvas.
@@ -212,6 +230,7 @@ function doTriangulate() {
 	redraw();
 }
 
+doTriangulate()
 </script>
 
 <br><br>

@@ -34,6 +34,21 @@ function isInsideTriangle(triangle, pointCoordinates){
     return ot1 > 0 && ot2 > 0 && ot3 > 0;
 }
 
+function isInsideCircle(circlePoints, point) {
+    let a = circlePoints[0];
+    let b = circlePoints[1];
+    let c = circlePoints[2];
+
+    let matrix = [
+        [b.x - a.x, b.y - a.y, (b.x - a.x) * (b.x + a.x) + (b.y - a.y) * (b.y + a.y)],
+        [c.x - a.x, c.y - a.y, (c.x - a.x) * (c.x + a.x) + (c.y - a.y) * (c.y + a.y)],
+        [point.x - a.x, point.y - a.y, (point.x - a.x) * (point.x + a.x) + (point.y - a.y) * (point.y + a.y)]
+    ];
+
+    let determinant = math.det(matrix);
+    return determinant < 0;
+}
+
 
 function isOnBoundaryOfTriangleByDeterminants(ot1, ot2, ot3){
     let sumOfSignFunctionOfOrientationTest = Math.sign(ot1) + Math.sign(ot2) + Math.sign(ot3);
@@ -143,4 +158,4 @@ function computeEnclosingTriangle(pointsToEnclose){
 }
 
 
-module.exports = {computeEnclosingTriangle, isInsideTriangle};
+module.exports = {computeEnclosingTriangle, isInsideTriangle, isInsideCircle};

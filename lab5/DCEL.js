@@ -130,6 +130,87 @@ class DCEL{
     }
 
 
+    getFarthestVertexFromNeighbouringFace(faceIndex, neighbouringFaceIndex) {
+        let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceIndex);
+        let verticesIndicesAroundNeighbouringFace = this.getVerticesIndicesAroundFace(neighbouringFaceIndex);
+
+        for(let vertexIndex = 0; vertexIndex < verticesIndicesAroundNeighbouringFace.length; vertexIndex++){
+            let forthVertex = verticesIndicesAroundNeighbouringFace[vertexIndex];
+            if (verticesIndicesAroundFace.indexOf(forthVertex) === -1){
+                return forthVertex;
+            }
+        }
+        console.error("getFarthestVertexFromNeighbouringFace didn't find 4th vertex. faceindex neighouring", neighbouringFaceIndex, " faceindex", faceIndex)
+        this.printEdges()
+        this.printFaces()
+        this.printVertices()
+    }
+
+    getFacesAroundFace(faceIndex){
+        let facesAroundFace = [];
+        let firstEdgeAttachedToFace = this.facesList[faceIndex];
+        let secondEdgeAttachedToFace, thirdEdgeAttachedToFace;
+
+        if(this.getLeftFace(firstEdgeAttachedToFace) === faceIndex) {
+            facesAroundFace.push(this.getRightFace(firstEdgeAttachedToFace));
+            secondEdgeAttachedToFace = this.getBeforeEdge(firstEdgeAttachedToFace);
+            //
+            // if (this.getLeftFace(secondEdgeAttachedToFace) === faceIndex){
+            //     facesAroundFace.push(this.getRightFace(secondEdgeAttachedToFace));
+            //     thirdEdgeAttachedToFace = this.getBeforeEdge(secondEdgeAttachedToFace);
+            // }
+            // else {
+            //     facesAroundFace.push(this.getLeftFace(secondEdgeAttachedToFace));
+            //     thirdEdgeAttachedToFace = this.getNextEdge(secondEdgeAttachedToFace);
+            // }
+            //
+            // if(this.getRightFace(thirdEdgeAttachedToFace) === faceIndex){
+            //     facesAroundFace.push(this.getLeftFace(thirdEdgeAttachedToFace))
+            // }
+            // else {
+            //     facesAroundFace.push(this.getRightFace(thirdEdgeAttachedToFace))
+            // }
+        }
+
+        else {
+            facesAroundFace.push(this.getLeftFace(firstEdgeAttachedToFace));
+            secondEdgeAttachedToFace = this.getNextEdge(firstEdgeAttachedToFace);
+
+            // if (this.getLeftFace(secondEdgeAttachedToFace) === faceIndex){
+            //     facesAroundFace.push(this.getRightFace(secondEdgeAttachedToFace))
+            //     thirdEdgeAttachedToFace = this.getBeforeEdge(secondEdgeAttachedToFace);
+            // }
+            // else {
+            //     facesAroundFace.push(this.getLeftFace(secondEdgeAttachedToFace));
+            //     thirdEdgeAttachedToFace = this.getNextEdge(secondEdgeAttachedToFace);
+            // }
+            //
+            // if(this.getRightFace(thirdEdgeAttachedToFace) === faceIndex){
+            //     facesAroundFace.push(this.getLeftFace(thirdEdgeAttachedToFace))
+            // }
+            // else {
+            //     facesAroundFace.push(this.getRightFace(thirdEdgeAttachedToFace))
+            // }
+        }
+        if (this.getLeftFace(secondEdgeAttachedToFace) === faceIndex){
+            facesAroundFace.push(this.getRightFace(secondEdgeAttachedToFace))
+            thirdEdgeAttachedToFace = this.getBeforeEdge(secondEdgeAttachedToFace);
+        }
+        else {
+            facesAroundFace.push(this.getLeftFace(secondEdgeAttachedToFace));
+            thirdEdgeAttachedToFace = this.getNextEdge(secondEdgeAttachedToFace);
+        }
+
+        if(this.getRightFace(thirdEdgeAttachedToFace) === faceIndex){
+            facesAroundFace.push(this.getLeftFace(thirdEdgeAttachedToFace))
+        }
+        else {
+            facesAroundFace.push(this.getRightFace(thirdEdgeAttachedToFace))
+        }
+
+        return facesAroundFace
+    }
+
     printEdges(){
         for(let i=0; i < this.edgesList.length; i++){
             let edge = this.edgesList[i];
@@ -176,6 +257,7 @@ class DCEL{
     }
 
     getFacesAroundVertex(vertexIndex){
+        console.log("get faces around vertex ", vertexIndex);
         let facesAroundVertex = [];
         let firstEdge = this.getEdgeFromVertex(vertexIndex);
         let edge = firstEdge;

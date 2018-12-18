@@ -322,8 +322,87 @@ class DCELForDelaunayTriangulation extends DCEL{
 
         this.edgesCount += 3;
         this.facesCount += 2;
+
+        let facesToCheckIfLocallyDelaunay = [faceIndex, facesCountBeforeAdding, facesCountBeforeAdding + 1];
+
+        this.flipUntilTriangulationIsDelaunay(facesToCheckIfLocallyDelaunay);
     }
 
+    flipUntilTriangulationIsDelaunay(facesToCheck){
+        while(facesToCheck.length !== 0){
+            let faceToCheck = facesToCheck.shift();
+            let verticesIndicesAroundFace = this.getVerticesIndicesAroundFace(faceToCheck);
+            let verticesCoordinatesAroundFace = verticesIndicesAroundFace.map(this.getVertexCoordinates.bind(this));
+            let triangleInCounterClockwiseOrder = getTriangleInCounterClockWiseOrder(verticesCoordinatesAroundFace);
+            let facesAroundCurrentFace = this.getFacesAroundFace(faceToCheck);
+
+            for(let i = 0; i < facesAroundCurrentFace.length; i++) {
+                let neighbouringFaceIndex = facesAroundCurrentFace[i];
+                if(neighbouringFaceIndex !== -1){
+                    // find farthest vertex
+                    let farthestVertexFromNeighbouringFace = this.getFarthestVertexFromNeighbouringFace(
+                        faceToCheck, neighbouringFaceIndex
+                    );
+                    let farthestVertexCoordinates = this.getVertexCoordinates(farthestVertexFromNeighbouringFace);
+
+                    // if farthest vertex is inside triangle then flip
+                    if(isInsideCircle(triangleInCounterClockwiseOrder, farthestVertexCoordinates)){
+                        let farthestVertexInFaceToCheckFromNeighbouringFace = this.getFarthestVertexFromNeighbouringFace(neighbouringFaceIndex, faceToCheck);
+
+                        let edgesAroundFace1 = this.getEdgesEnclosingFaceInCounterClockwiseOrder(faceToCheck);
+                        let edgesAroundFace2 = this.getEdgesEnclosingFaceInCounterClockwiseOrder(neighbouringFaceIndex);
+
+                        let diagonal = edgesAroundFace1.filter(i => edgesAroundFace2.indexOf(i) !== -1)[0];
+                        let diagonalIndexInEdgesAroundFaceToCheck = edgesAroundFace1.indexOf(diagonal);
+                        let diagonalIndexInEdgesAroundNeighbouringFace = edgesAroundFace2.indexOf(diagonal);
+
+                        let edgeBeforeDiagonalInFaceToCheck = edgesAroundFace1[(diagonalIndexInEdgesAroundFaceToCheck + 2) % 3];
+                        let edgeNextToDiagonalInFaceToCheck = edgesAroundFace1[(diagonalIndexInEdgesAroundFaceToCheck + 1) % 3];
+                        let edgeBeforeDiagonalInNeighbouringFace = edgesAroundFace2[(diagonalIndexInEdgesAroundNeighbouringFace + 2) % 3];
+                        let edgeNextToDiagonalInNeighbouringFace = edgesAroundFace2[(diagonalIndexInEdgesAroundNeighbouringFace + 1) % 3];
+
+                        this.replaceFaceIndexWithNewOne(edgeNextToDiagonalInNeighbouringFace, neighbouringFaceIndex, faceToCheck);
+                        this.replaceEdgeWithNewOne(edgeNextToDiagonalInNeighbouringFace, diagonal, edgeBeforeDiagonalInFaceToCheck);
+
+                        this.replaceFaceIndexWithNewOne(edgeNextToDiagonalInFaceToCheck, faceToCheck, neighbouringFaceIndex);
+                        this.replaceEdgeWithNewOne(edgeNextToDiagonalInFaceToCheck, diagonal, edgeBeforeDiagonalInNeighbouringFace);
+
+                        // update before edges if it was diagonal
+                        this.replaceEdgeWithNewOne(edgeBeforeDiagonalInFaceToCheck, edgeNextToDiagonalInFaceToCheck, diagonal);
+                        this.replaceEdgeWithNewOne(edgeBeforeDiagonalInNeighbouringFace, edgeNextToDiagonalInNeighbouringFace, diagonal);
+
+                        //update information about vertices from diagonal
+                        if(this.getLeftFace(diagonal) === neighbouringFaceIndex){
+                            this.verticesList[this.getStartingVertexFromEdge(diagonal)].edgeIndex = edgeNextToDiagonalInFaceToCheck;
+                            this.verticesList[this.getEndingVertexFromEdge(diagonal)].edgeIndex = edgeNextToDiagonalInNeighbouringFace;
+                        }
+                        else {
+                            this.verticesList[this.getStartingVertexFromEdge(diagonal)].edgeIndex = edgeNextToDiagonalInNeighbouringFace;
+                            this.verticesList[this.getEndingVertexFromEdge(diagonal)].edgeIndex = edgeNextToDiagonalInFaceToCheck;
+                        }
+
+                        //change position of diagonal
+                        this.edgesList[diagonal] = {
+                            'vertexStart': farthestVertexFromNeighbouringFace,
+                            'vertexEnd': farthestVertexInFaceToCheckFromNeighbouringFace,
+                            'faceLeft': faceToCheck,
+                            'faceRight': neighbouringFaceIndex,
+                            'edgeBefore': edgeNextToDiagonalInNeighbouringFace,
+                            'edgeNext': edgeNextToDiagonalInFaceToCheck,
+                        };
+
+                        this.facesList[neighbouringFaceIndex] = diagonal;
+                        this.facesList[faceToCheck] = diagonal;
+                        facesToCheck.push(neighbouringFaceIndex); //
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
 
     triangulate(){
         for(let i=3; i < this.verticesList.length; i++){
@@ -339,7 +418,9 @@ class DCELForDelaunayTriangulation extends DCEL{
             }
 
         }
-
+        this.printVertices()
+        this.printEdges()
+        this.printFaces()
         console.log("Triangulated", this.triangulatedCount, "points in total out of", this.verticesList.length)
     }
 }
