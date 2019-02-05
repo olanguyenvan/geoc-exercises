@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>GEOC - Lab 3</title>
+</head>
+
+<h1>GEOC - Lab 3</h1>
+
+
+<div style="display: flex; flex-wrap: wrap">
+    <div>
+        <form>
+            Input data set:
+            <select id="dataset" onchange="changeDataSet()">
+                <option value="0">Test set 1</option>
+                <option value="1">Test set 2</option>
+            </select>
+        </form>
+        <canvas id="canvas" width="800" height="700"></canvas>
+        <script src="math.min.js"></script>
+        <script type="text/javascript" src="TestLab3_1.json.js"></script>
+        <script type="text/javascript" src="TestLab3_2.json.js"></script>
+    </div>
+
+    <div>
+        <h2>Result of classification</h2>
+        <span id="result"></span>
+
+    </div>
+    <script type="text/javascript" src="main.js"></script>
+
+</div>
+</html>
